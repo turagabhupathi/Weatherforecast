@@ -14,6 +14,9 @@ public class Weatherforecast {
     @SerializedName("cnt")
     @Expose
     private Integer cnt;
+    @SerializedName("sys")
+    @Expose
+    private Sys sys;
     @SerializedName("list")
     @Expose
     private java.util.List<com.bhu.weatherforecast.models.Listf> list = null;
@@ -40,6 +43,14 @@ public class Weatherforecast {
 
     public void setCnt(Integer cnt) {
         this.cnt = cnt;
+    }
+
+    public Sys getSys() {
+        return sys;
+    }
+
+    public void setSys(Sys sys) {
+        this.sys = sys;
     }
 
     public java.util.List<com.bhu.weatherforecast.models.Listf> getListf() {

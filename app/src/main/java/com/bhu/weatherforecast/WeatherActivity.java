@@ -17,6 +17,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -30,6 +31,7 @@ import com.bumptech.glide.Glide;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -56,10 +58,6 @@ public class WeatherActivity extends AppCompatActivity {
         dialog.setVisibility(View.VISIBLE);
         relativeLayout.setVisibility(View.GONE);
         initviews();
-        //get location
-
-
-        //
         weatherviewmodel.initiliaze();
         swipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -127,14 +125,14 @@ public class WeatherActivity extends AppCompatActivity {
                 dialog.setVisibility(View.GONE);
                 swipe.setRefreshing(false);
                 relativeLayout.setVisibility(View.VISIBLE);
-                String updatedAtText = new SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.ENGLISH).format(new Date(weather.getDt() * 1000));
-                time.setText(updatedAtText);
+                String timec = getDate(weather.getDt());
+                String sunrise = getDate(weather.getSys().getSunrise());
+                String sunset = getDate(weather.getSys().getSunset());
+                time.setText(timec);
                 address.setText(weather.getName());
                 status.setText(weather.getWeather().get(0).getDescription());
                 String url = "http://openweathermap.org/img/w/" + String.valueOf(weather.getWeather().get(0).getIcon()) + ".png";
                 Glide.with(WeatherActivity.this).load(url).into(weathericon);
-                String sunrise = new SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.ENGLISH).format(new Date(weather.getSys().getSunrise() * 1000));
-                String sunset = new SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.ENGLISH).format(new Date(weather.getSys().getSunset() * 1000));
                 temp.setText(String.valueOf(weather.getMain().getTemp()) + "°C");
                 windspeed.setText(String.valueOf(sunrise));
                 cloudcover.setText(String.valueOf(weather.getClouds().getAll()) + "%");
@@ -148,5 +146,12 @@ public class WeatherActivity extends AppCompatActivity {
 //                }
             }
         });
+    }
+
+    private String getDate(long time) {
+        Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+        cal.setTimeInMillis(time * 1000);
+        String date = DateFormat.format("dd-MM-yyyy hh:mm a", cal).toString();
+        return date;
     }
 }

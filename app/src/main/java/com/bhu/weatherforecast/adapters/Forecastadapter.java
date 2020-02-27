@@ -2,6 +2,7 @@ package com.bhu.weatherforecast.adapters;
 
 import android.content.Context;
 import android.text.SpannableString;
+import android.text.format.DateFormat;
 import android.text.style.UnderlineSpan;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,7 +48,7 @@ public class Forecastadapter extends RecyclerView.Adapter<Forecastadapter.ViewHo
     @Override
     public void onBindViewHolder(final Forecastadapter.ViewHolder holder, int position) {
         final Listf weatherforecst = weatheradapters.getListf().get(position);
-        String date = new SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.ENGLISH).format(new Date(weatherforecst.getDt() * 1000));
+        String date = String.valueOf(weatherforecst.getDtTxt());
         holder.time.setText(date);
         holder.status.setText(weatherforecst.getWeather().get(0).getDescription());
         String url = "http://openweathermap.org/img/w/" + String.valueOf(weatherforecst.getWeather().get(0).getIcon()) + ".png";
