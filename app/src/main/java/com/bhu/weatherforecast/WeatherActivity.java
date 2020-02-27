@@ -95,8 +95,7 @@ public class WeatherActivity extends AppCompatActivity {
         dialog.setVisibility(View.VISIBLE);
         relativeLayout.setVisibility(View.GONE);
         weatherviewmodel.refreshdata();
-            dialog.setVisibility(View.GONE);
-        relativeLayout.setVisibility(View.VISIBLE);
+        getweatherLivedata();
         swipe.setRefreshing(false);
     }
 
