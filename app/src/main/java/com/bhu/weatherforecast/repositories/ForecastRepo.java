@@ -16,6 +16,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ForecastRepo {
 
     private static ForecastRepo instance;
+    private String city;
     private MutableLiveData<Weatherforecast> data = new MutableLiveData<>();
     //for failure case checkin
     private MutableLiveData<Boolean> forecastdataerror = new MutableLiveData<Boolean>();
@@ -29,9 +30,16 @@ public class ForecastRepo {
 
 
     public LiveData<Weatherforecast> getForecastdata() {
+        locationrepo ldata = new locationrepo();
+        ldata = locationrepo.getInstance();
+        if(ldata.getCity().isEmpty()){
+            city = "Bangalore";
+        }else {
+            city = ldata.getCity().get(0);
+        }
         Weatherapi weatherapi = RetrofitClient.getInstance().getWeatherApi();
 
-        Call<Weatherforecast> call = weatherapi.getForecast("Bangalore, India", "4c078fa6cd8a44de93b2bbfeaa7df6f6","metric","7");
+        Call<Weatherforecast> call = weatherapi.getForecast(city, "4c078fa6cd8a44de93b2bbfeaa7df6f6","metric","7");
 
         call.enqueue(new Callback<Weatherforecast>() {
             @Override

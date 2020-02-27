@@ -1,14 +1,11 @@
 package com.bhu.weatherforecast;
 
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
@@ -18,15 +15,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bhu.weatherforecast.adapters.Forecastadapter;
-import com.bhu.weatherforecast.models.Listf;
 import com.bhu.weatherforecast.models.Weatherforecast;
+import com.bhu.weatherforecast.repositories.locationrepo;
 import com.bhu.weatherforecast.viewmodels.Forecastviewmodel;
-import com.bhu.weatherforecast.viewmodels.Weatherviewmodel;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
 
 public class Forecastactivity extends AppCompatActivity {
     private RecyclerView recyclerViewforecasts;
@@ -99,7 +90,9 @@ public class Forecastactivity extends AppCompatActivity {
                 dialog.setVisibility(View.GONE);
                 city.setVisibility(View.VISIBLE);
                 swipe.setRefreshing(false);
-                city.setText("Bengaluru, India");
+                locationrepo ldata = new locationrepo();
+                ldata = locationrepo.getInstance();
+               city.setText(ldata.getCity().get(0));
                 adapter = new Forecastadapter(weatherforecast, Forecastactivity.this);
                 recyclerViewforecasts.setAdapter(adapter);
                 dialog.setVisibility(View.GONE);

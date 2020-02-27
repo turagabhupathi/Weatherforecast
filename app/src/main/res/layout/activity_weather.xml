@@ -341,6 +341,13 @@
             android:layout_gravity="center"
             />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Please Go To App Info and accept Location Permissions \n Reopen App Again To Get Weather Info"
+            android:textColor="@android:color/black"
+            android:layout_gravity="center"/>
+
     </LinearLayout>
 
 

@@ -2,6 +2,7 @@ package com.bhu.weatherforecast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -26,13 +27,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bhu.weatherforecast.models.Weathercurrent;
+import com.bhu.weatherforecast.repositories.locationrepo;
 import com.bhu.weatherforecast.viewmodels.Weatherviewmodel;
 import com.bumptech.glide.Glide;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -46,41 +47,98 @@ public class WeatherActivity extends AppCompatActivity {
     private LinearLayout linearLayout;
     private SwipeRefreshLayout swipe;
     public static Context mContext;
-    private Double temperature;
+    private Location location;
+    private LocationManager locationManager;
+    private Double longitude, latitude;
+    private locationrepo ldata;
+    private int REQUEST_CODE_ASK_PERMISSIONS = 123;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_weather);
         mContext = this;
+        ldata = new locationrepo();
+        ldata = locationrepo.getInstance();
         relativeLayout = findViewById(R.id.mainContainer);
         dialog = (LinearLayout) findViewById(R.id.mainprogress);
         dialog.setVisibility(View.VISIBLE);
         relativeLayout.setVisibility(View.GONE);
         initviews();
+        locationservice();
+        weatherviewmodel = ViewModelProviders.of(this).get(Weatherviewmodel.class);
         weatherviewmodel.initiliaze();
+        getweatherLivedata();
         swipe.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                refreshcurrentdata();
+                if (ContextCompat.checkSelfPermission(WeatherActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    dialog.setVisibility(View.VISIBLE);
+                }else {
+                    locationservice();
+                    refreshcurrentdata();
+                }
             }
         });
-        getweatherLivedata();
         linearLayout = findViewById(R.id.forecast);
         linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(WeatherActivity.this,Forecastactivity.class));
+                startActivity(new Intent(WeatherActivity.this, Forecastactivity.class));
                 overridePendingTransition(R.anim.slide_in, R.anim.slide_in);
             }
         });
     }
 
-    private void refreshcurrentdata(){
+    private void refreshcurrentdata() {
         dialog.setVisibility(View.VISIBLE);
         relativeLayout.setVisibility(View.GONE);
         weatherviewmodel.refreshdata();
-        getweatherLivedata();
+            dialog.setVisibility(View.GONE);
+        relativeLayout.setVisibility(View.VISIBLE);
+        swipe.setRefreshing(false);
+    }
+
+
+
+    private void locationservice() {
+        requestPermission();
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        boolean network_enabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+
+        Location location;
+        if (network_enabled) {
+            if (ContextCompat.checkSelfPermission(WeatherActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                // Permission is not granted
+                dialog.setVisibility(View.VISIBLE);
+             }else {
+                location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                if (location != null) {
+                    ArrayList<String> city = new ArrayList<>();
+                    longitude = location.getLongitude();
+                    latitude = location.getLatitude();
+                        Geocoder geocoder;
+                        List<Address> addresses = null;
+                        geocoder = new Geocoder(this, Locale.getDefault());
+                        try {
+                            addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        city.add(addresses.get(0).getLocality());
+                        ldata.setCity(city);
+                }
+            }
+        }
+    }
+
+    private void requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_ASK_PERMISSIONS);
+        }
     }
 
     private void initviews() {
@@ -99,53 +157,59 @@ public class WeatherActivity extends AppCompatActivity {
         weatherviewmodel = ViewModelProviders.of(this).get(Weatherviewmodel.class);
     }
     private void getweatherLivedata() {
-        weatherviewmodel.getIsdataerror().observe(this, new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean aBoolean) {
-                if (aBoolean) {
-                    dialog.setVisibility(View.GONE);
-                    AlertDialog alertDialog = new AlertDialog.Builder(WeatherActivity.this).create();
-                    alertDialog.setTitle("Network Error");
-                    alertDialog.setMessage("Please Make Sure Connect to Internet");
-                    alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Tap To TryAgain",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    refreshcurrentdata();
-                                }
-                            });
-                    alertDialog.show();
-                }else {
-                    dialog.setVisibility(View.GONE);
+        if(ldata.getCity().isEmpty()){
+            dialog.setVisibility(View.VISIBLE);
+        }else {
+            locationservice();
+            weatherviewmodel.getIsdataerror().observe(this, new Observer<Boolean>() {
+                @Override
+                public void onChanged(Boolean aBoolean) {
+                    if (aBoolean) {
+                        dialog.setVisibility(View.GONE);
+                        AlertDialog alertDialog = new AlertDialog.Builder(WeatherActivity.this).create();
+                        alertDialog.setTitle("Network Error");
+                        alertDialog.setMessage("Please Make Sure Connect to Internet");
+                        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Tap To TryAgain",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        refreshcurrentdata();
+                                    }
+                                });
+                        alertDialog.show();
+                    }else {
+                        dialog.setVisibility(View.GONE);
+                    }
                 }
-            }
-        });
-        weatherviewmodel.getWeatherLiveData().observe(this, new Observer<Weathercurrent>() {
-            @Override
-            public void onChanged(Weathercurrent weather) {
-                dialog.setVisibility(View.GONE);
-                swipe.setRefreshing(false);
-                relativeLayout.setVisibility(View.VISIBLE);
-                String timec = getDate(weather.getDt());
-                String sunrise = getDate(weather.getSys().getSunrise());
-                String sunset = getDate(weather.getSys().getSunset());
-                time.setText(timec);
-                address.setText(weather.getName());
-                status.setText(weather.getWeather().get(0).getDescription());
-                String url = "http://openweathermap.org/img/w/" + String.valueOf(weather.getWeather().get(0).getIcon()) + ".png";
-                Glide.with(WeatherActivity.this).load(url).into(weathericon);
-                temp.setText(String.valueOf(weather.getMain().getTemp()) + "°C");
-                windspeed.setText(String.valueOf(sunrise));
-                cloudcover.setText(String.valueOf(weather.getClouds().getAll()) + "%");
-                winddir.setText(sunset);
-                pressure.setText(String.valueOf(weather.getMain().getPressure()));
-                humidity.setText(String.valueOf(weather.getMain().getHumidity()));
+            });
+            weatherviewmodel.getWeatherLiveData().observe(this, new Observer<Weathercurrent>() {
+                @Override
+                public void onChanged(Weathercurrent weather) {
+                    dialog.setVisibility(View.GONE);
+                    swipe.setRefreshing(false);
+                    relativeLayout.setVisibility(View.VISIBLE);
+                    String timec = getDate(weather.getDt());
+                    String sunrise = getDate(weather.getSys().getSunrise());
+                    String sunset = getDate(weather.getSys().getSunset());
+                    time.setText(timec);
+                    address.setText(weather.getName());
+                    status.setText(weather.getWeather().get(0).getDescription());
+                    String url = "http://openweathermap.org/img/w/" + String.valueOf(weather.getWeather().get(0).getIcon()) + ".png";
+                    Glide.with(WeatherActivity.this).load(url).into(weathericon);
+                    temp.setText(String.valueOf(weather.getMain().getTemp()) + "°C");
+                    windspeed.setText(String.valueOf(sunrise));
+                    cloudcover.setText(String.valueOf(weather.getClouds().getAll()) + "%");
+                    winddir.setText(sunset);
+                    pressure.setText(String.valueOf(weather.getMain().getPressure()));
+                    humidity.setText(String.valueOf(weather.getMain().getHumidity()));
 //                if (weather.getCurrent().getIsDay().equals("yes")) {
 //                    about.setText("Day");
 //                } else {
 //                    about.setText("Night");
 //                }
-            }
-        });
+                }
+            });
+        }
+
     }
 
     private String getDate(long time) {
