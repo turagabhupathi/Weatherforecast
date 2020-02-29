@@ -156,10 +156,7 @@ public class WeatherActivity extends AppCompatActivity {
         weatherviewmodel = ViewModelProviders.of(this).get(Weatherviewmodel.class);
     }
     private void getweatherLivedata() {
-        if(ldata.getCity().isEmpty()){
-            dialog.setVisibility(View.VISIBLE);
-        }else {
-            locationservice();
+
             weatherviewmodel.getIsdataerror().observe(this, new Observer<Boolean>() {
                 @Override
                 public void onChanged(Boolean aBoolean) {
@@ -207,7 +204,6 @@ public class WeatherActivity extends AppCompatActivity {
 //                }
                 }
             });
-        }
 
     }
 
